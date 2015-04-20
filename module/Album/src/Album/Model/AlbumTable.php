@@ -2,19 +2,28 @@
 namespace Album\Model;
 
 use Zend\Db\TableGateway\TableGateway;
+use Zend\Db\ResultSet\ResultSet;
 
 class AlbumTable
 {
     protected $tableGateway;
+    protected $adapter;
 
     public function __construct(TableGateway $tableGateway)
     {
         $this->tableGateway = $tableGateway;
+        $this->adapter = $tableGateway->getAdapter();
     }
 
     public function fetchAll()
     {
-        $resultSet = $this->tableGateway->select();
+        //$resultSet = $this->tableGateway->select();
+        //return $resultSet;
+
+        $statement = $this->adapter->createStatement('SELECT * FROM album', null);
+        $query = $statement->execute();
+        $resultSet = new ResultSet;
+        $resultSet->initialize($query);
         return $resultSet;
     }
 
