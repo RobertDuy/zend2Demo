@@ -5,6 +5,10 @@ use Album\Model\Album;
 use Album\Model\AlbumTable;
 use Zend\Db\ResultSet\ResultSet;
 use Zend\Db\TableGateway\TableGateway;
+use Zend\Http\Client\Adapter\Curl;
+use Zend\Http\Client;
+use Album\Api\SomeApiService;
+use Album\Api\ConfigAwareInterface;
 
 class Module
 {
@@ -42,6 +46,34 @@ class Module
                         $resultSetPrototype->setArrayObjectPrototype(new Album());
                         return new TableGateway('album', $dbAdapter, null, $resultSetPrototype);
                     },
+                'SomeApiService' => function($sm) {
+                        $httpClient = new Client;
+                        $httpClient->setAdapter(new Curl);
+
+                        $client = new SomeApiService;
+                        $client->setHttpClient($httpClient);
+
+                        return $client;
+                    }
+            ),
+            'invokables' => array(
+                'SomeApi' => 'Album\Api\SomeApi'
+            ),
+            'shared' => array(
+                // when you call $sm->get('SomeApi') we have new Instance of SomeApi object
+                'someApi' => false
+            ),
+            'initializers' => array(
+                function($instance, $sm) {
+                    if($instance instanceof ConfigAwareInterface) {
+                        $config = $sm->get('application')->getConfig();
+                        $apiConfig = isset($config['api-config']) ? $config['api-config'] : array();
+                        $instance->setConfig($apiConfig);
+                    }
+                }
+            ),
+            'abstract_factories' => array(
+                'AbstractApiResponseFactory' => 'Album\Api\AbstractSomeApiResponseFactory'
             ),
         );
     }
